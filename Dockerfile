@@ -1,9 +1,8 @@
 FROM golang
-MAINTAINER Vip Consult Solutions <team@vip-consult.solutions>
 
 
-ADD . /go/src/cd-demo
-RUN go install cd-demo
-CMD /go/bin/cd-demo
+ADD . /Users/bikramsingh/docker-ci-cd
+RUN go install docker-ci-cd
+CMD /go/bin/docker-ci-cd
 
 EXPOSE 8080
