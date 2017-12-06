@@ -1,4 +1,4 @@
-  env.DOCKERHUB_USERNAME = 'bikram.singh06@gmail.com'
+  env.DOCKERHUB_USERNAME = 'sbikram'
 
   node("docker-prod") {
     checkout scm
