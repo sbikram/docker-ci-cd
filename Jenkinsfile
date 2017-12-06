@@ -10,7 +10,7 @@
       try {
         sh "docker build -t docker-ci-cd ."
         sh "docker service rm docker-ci-cd || true"
-        sh "docker service create -d -p 9098:8080 --name=docker-ci-cd docker-ci-cd"
+        sh "docker service create -p 9098:8080 --name=docker-ci-cd docker-ci-cd"
         // env variable is used to set the server where go test will connect to run the test
         sh "docker run --rm -v ${WORKSPACE}:/go/src/docker-ci-cd --link=docker-ci-cd -e SERVER=docker-ci-cd golang go test docker-ci-cd -v --run Integration"
       }
@@ -38,7 +38,7 @@
     stage("Staging") {
       try {
         sh "docker service rm docker-ci-cd || true"
-        sh "docker service create -d -p 9098:8080 --name=docker-ci-cd-${BUILD_NUMBER} ${DOCKERHUB_USERNAME}/docker-ci-cd:${BUILD_NUMBER}"
+        sh "docker service create -p 9098:8080 --name=docker-ci-cd-${BUILD_NUMBER} ${DOCKERHUB_USERNAME}/docker-ci-cd:${BUILD_NUMBER}"
         sh "docker run --rm -v ${WORKSPACE}:/go/src/docker-ci-cd --link=docker-ci-cd -e SERVER=docker-ci-cd golang go test docker-ci-cd -v"
 
       } catch(e) {
