@@ -1,8 +1,8 @@
 FROM golang
 
 
-ADD . /go/src/docker-ci-cd
-RUN go install docker-ci-cd
-CMD /go/bin/docker-ci-cd
+ADD . /go/src/cd-demo
+RUN go install cd-demo
+CMD /go/bin/cd-demo
 
 EXPOSE 8080
