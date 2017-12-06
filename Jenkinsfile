@@ -4,30 +4,30 @@
     checkout scm
 
     stage("Unit Test") {
-      sh "docker run --rm -v ${WORKSPACE}:/go/src/cd-demo golang go test cd-demo -v --run Unit"
+      sh "docker run --rm -v ${WORKSPACE}:/go/src/docker-ci-cd golang go test docker-ci-cd -v --run Unit"
     }
     stage("Integration Test") {
       try {
-        sh "docker build -t cd-demo ."
-        sh "docker rm -f cd-demo || true"
-        sh "docker run -d -p 8080:8080 --name=cd-demo cd-demo"
+        sh "docker build -t docker-ci-cd ."
+        sh "docker rm -f docker-ci-cd || true"
+        sh "docker run -d -p 8080:8080 --name=docker-ci-cd docker-ci-cd"
         // env variable is used to set the server where go test will connect to run the test
-        sh "docker run --rm -v ${WORKSPACE}:/go/src/cd-demo --link=cd-demo -e SERVER=cd-demo golang go test cd-demo -v --run Integration"
+        sh "docker run --rm -v ${WORKSPACE}:/go/src/docker-ci-cd --link=docker-ci-cd -e SERVER=docker-ci-cd golang go test docker-ci-cd -v --run Integration"
       }
       catch(e) {
         error "Integration Test failed"
       }finally {
-        sh "docker rm -f cd-demo || true"
+        sh "docker rm -f docker-ci-cd || true"
         sh "docker ps -aq | xargs docker rm || true"
         sh "docker images -aq -f dangling=true | xargs docker rmi || true"
       }
     }
     stage("Build") {
-      sh "docker build -t ${DOCKERHUB_USERNAME}/cd-demo:${BUILD_NUMBER} ."
+      sh "docker build -t ${DOCKERHUB_USERNAME}/docker-ci-cd:${BUILD_NUMBER} ."
     }
     stage("Publish") {
       withDockerRegistry([credentialsId: 'DockerHub']) {
-        sh "docker push ${DOCKERHUB_USERNAME}/cd-demo:${BUILD_NUMBER}"
+        sh "docker push ${DOCKERHUB_USERNAME}/docker-ci-cd:${BUILD_NUMBER}"
       }
     }
   }
@@ -37,14 +37,14 @@
 
     stage("Staging") {
       try {
-        sh "docker rm -f cd-demo || true"
-        sh "docker run -d -p 8080:8080 --name=cd-demo ${DOCKERHUB_USERNAME}/cd-demo:${BUILD_NUMBER}"
-        sh "docker run --rm -v ${WORKSPACE}:/go/src/cd-demo --link=cd-demo -e SERVER=cd-demo golang go test cd-demo -v"
+        sh "docker rm -f docker-ci-cd || true"
+        sh "docker run -d -p 8080:8080 --name=docker-ci-cd ${DOCKERHUB_USERNAME}/docker-ci-cd:${BUILD_NUMBER}"
+        sh "docker run --rm -v ${WORKSPACE}:/go/src/docker-ci-cd --link=docker-ci-cd -e SERVER=docker-ci-cd golang go test docker-ci-cd -v"
 
       } catch(e) {
         error "Staging failed"
       } finally {
-        sh "docker rm -f cd-demo || true"
+        sh "docker rm -f docker-ci-cd || true"
         sh "docker ps -aq | xargs docker rm || true"
         sh "docker images -aq -f dangling=true | xargs docker rmi || true"
       }
@@ -56,13 +56,13 @@
       try {
         // Create the service if it doesn't exist otherwise just update the image
         sh '''
-          SERVICES=$(docker service ls --filter name=cd-demo --quiet | wc -l)
+          SERVICES=$(docker service ls --filter name=docker-ci-cd --quiet | wc -l)
           if [[ "$SERVICES" -eq 0 ]]; then
-            docker network rm cd-demo || true
-            docker network create --driver overlay --attachable cd-demo
-            docker service create --replicas 3 --network cd-demo --name cd-demo -p 8080:8080 ${DOCKERHUB_USERNAME}/cd-demo:${BUILD_NUMBER}
+            docker network rm docker-ci-cd || true
+            docker network create --driver overlay --attachable docker-ci-cd
+            docker service create --replicas 3 --network docker-ci-cd --name docker-ci-cd -p 8080:8080 ${DOCKERHUB_USERNAME}/docker-ci-cd:${BUILD_NUMBER}
           else
-            docker service update --image ${DOCKERHUB_USERNAME}/cd-demo:${BUILD_NUMBER} cd-demo
+            docker service update --image ${DOCKERHUB_USERNAME}/docker-ci-cd:${BUILD_NUMBER} docker-ci-cd
           fi
           '''
         // run some final tests in production
@@ -71,9 +71,9 @@
           sleep 60s 
           for i in `seq 1 20`;
           do
-            STATUS=$(docker service inspect --format '{{ .UpdateStatus.State }}' cd-demo)
+            STATUS=$(docker service inspect --format '{{ .UpdateStatus.State }}' docker-ci-cd)
             if [[ "$STATUS" != "updating" ]]; then
-              docker run --rm -v ${WORKSPACE}:/go/src/cd-demo --network cd-demo -e SERVER=cd-demo golang go test cd-demo -v --run Integration
+              docker run --rm -v ${WORKSPACE}:/go/src/docker-ci-cd --network docker-ci-cd -e SERVER=docker-ci-cd golang go test docker-ci-cd -v --run Integration
               break
             fi
             sleep 10s
@@ -81,7 +81,7 @@
           
         '''
       }catch(e) {
-        sh "docker service update --rollback  cd-demo"
+        sh "docker service update --rollback  docker-ci-cd"
         error "Service update failed in production"
       }finally {
         sh "docker ps -aq | xargs docker rm || true"
