@@ -1,6 +1,6 @@
   env.DOCKERHUB_USERNAME = 'sbikram'
 
-  node("docker-prod") {
+  node("docker-test") {
     checkout scm
 
     stage("Unit Test") {
@@ -32,19 +32,19 @@
     }
   }
 
-  node("docker-prod") {
+  node("docker-stage") {
     checkout scm
 
     stage("Staging") {
       try {
         sh "docker rm -f docker-ci-cd || true"
-        sh "docker run -d -p 9098:8080 --name=docker-ci-cd-${BUILD_NUMBER} ${DOCKERHUB_USERNAME}/docker-ci-cd:${BUILD_NUMBER}"
+        sh "docker run -d -p 9098:8080 --name=docker-ci-cd ${DOCKERHUB_USERNAME}/docker-ci-cd:${BUILD_NUMBER}"
         sh "docker run --rm -v ${WORKSPACE}:/go/src/docker-ci-cd --link=docker-ci-cd -e SERVER=docker-ci-cd golang go test docker-ci-cd -v"
 
       } catch(e) {
         error "Staging failed"
       } finally {
-        sh "docker rm -f docker-ci-cd-${BUILD_NUMBER} || true"
+        sh "docker rm -f docker-ci-cd || true"
         sh "docker ps -aq | xargs docker rm || true"
         sh "docker images -aq -f dangling=true | xargs docker rmi || true"
       }
