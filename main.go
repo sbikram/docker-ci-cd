@@ -18,10 +18,10 @@ func main() {
 func index(w http.ResponseWriter, r *http.Request) {
 
 	switch r.URL.Path[1:] {
-	case "ping":
-		fmt.Fprint(w, "pong")
-	case "hi":
-		fmt.Fprint(w, "holla")
+	case "check":
+		fmt.Fprint(w, "If you are able to Reach this that means you application is UP")
+	case "api":
+		fmt.Fprint(w, "API is working")
 	default:
 		fmt.Fprint(w, "can't answer that!")
 	}
