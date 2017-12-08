@@ -8,7 +8,7 @@ import (
 
 func TestUnit(t *testing.T) {
 	cases := []struct{ question, reply string }{
-		{"check", "If you are able to Reach this that means you application is UP"},
+		{"check", "If you are reading this that means your application is UP"},
 		{"api", "API is working"},
 	}
 
