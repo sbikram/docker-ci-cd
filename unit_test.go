@@ -8,8 +8,8 @@ import (
 
 func TestUnit(t *testing.T) {
 	cases := []struct{ question, reply string }{
-		{"ping", "pong"},
-		{"hi", "holla"},
+		{"check", "If you are able to Reach this that means you application is UP"},
+		{"api", "API is working"},
 	}
 
 	for _, x := range cases {
